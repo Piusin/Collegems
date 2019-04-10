@@ -33,10 +33,46 @@ class Welcome extends My_Controller {
 	 }
 
 	 public function login(){
-	 	echo 'Login';
+	 	if( $this->session->userdata("user_id"))
+	 		return redirect("admin/dashboard");
+	 	$this->load->view('login');	
 	 }
 
-	 public function adminSignup(){
+	 public function signin(){
+	 	$this->form_validation->set_rules('email', 'Email', 'required');
+	 	$this->form_validation->set_rules('password', 'Password', 'required');
+	 	$this->form_validation->set_error_delimiters('<div class="text-danger">','</div>');
+	 	if($this->form_validation->run()){
+	 		$email = $this->input->post('email');
+	 		$password = sha1($this->input->post('password'));
+	 		$this->load->model('queries');
+	 		$userExist = $this->queries->adminExist($email, $password);
+	 		
+	 		if($userExist){
+	 			$sessionData = [
+	 				'user_id' => $userExist->user_id,
+	 				'username' => $userExist->username,
+	 				'email' => $userExist->email,
+	 				'role_id' => $userExist->role_id,
+	 			];
+	 			$this->session->set_userdata($sessionData);
+	 			return redirect("admin/dashboard");
+
+	 		}else
+	 		{
+	 			 $this->session->set_flashdata('message', 'Email or Password is Incorrect');
+	 			 return redirect("welcome/login");
+	 		}
+
+	 	}else{
+	 		$this->load->view("welcome/login");
+
+	 	}
+
+	 }
+
+	 public function adminSignup()
+	 {
 	 	$this->form_validation->set_rules('username', 'Username', 'Required');
 	 	$this->form_validation->set_rules('email', 'Email', 'Required');
 	 	$this->form_validation->set_rules('gender', 'Gender', 'Required');
@@ -63,6 +99,12 @@ class Welcome extends My_Controller {
 	 		$this-> adminRegister();
 
 	 	}
-}
+
+	}
+
+	public function logout(){
+		$this->session->unset_userdata("user_id");
+		return redirect("welcome/login");
+	}
 }
 ?>
